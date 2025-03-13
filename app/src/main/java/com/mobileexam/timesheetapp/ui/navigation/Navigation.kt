@@ -18,7 +18,7 @@ import com.mobileexam.timesheetapp.R
 import com.mobileexam.timesheetapp.ui.components.BottomNavigationBar
 import com.mobileexam.timesheetapp.ui.screens.HomeScreen.HomeScreen
 import com.mobileexam.timesheetapp.ui.screens.LoginScreen.LoginScreen
-import com.mobileexam.timesheetapp.ui.screens.ProfileScreen.ReportsScreen
+import com.mobileexam.timesheetapp.ui.screens.ProfileScreen.ProfileScreen
 import com.mobileexam.timesheetapp.ui.screens.TimesheetHistory.TimesheetHistoryScreen
 
 
@@ -68,7 +68,7 @@ fun TimesheetApp() {
                 modifier = Modifier,
                 navController = navController,
                 context = context) }
-            composable("profile") { ReportsScreen(navController) }
+            composable("profile") { ProfileScreen(navController) }
         }
     }
 }
