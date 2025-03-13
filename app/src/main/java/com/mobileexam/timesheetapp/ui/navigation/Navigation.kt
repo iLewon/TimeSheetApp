@@ -92,7 +92,13 @@ fun TimesheetApp() {
                     viewModel = homeScreenViewModel // Using shared ViewModel
                 )
             }
-            composable("history") { TimesheetHistoryScreen(navController) }
+            composable("history") {
+                TimesheetHistoryScreen(
+                    modifier = Modifier,
+                    navController = navController,
+                    context = context
+                )
+            }
             composable("profile") { ReportsScreen(navController) }
         }
     }
