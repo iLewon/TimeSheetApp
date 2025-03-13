@@ -1,4 +1,4 @@
-package com.mobileexam.timesheetapp.ui.screens
+package com.mobileexam.timesheetapp.ui.screens.ForgotPassword
 
 import androidx.compose.foundation.Image
 import androidx.compose.foundation.background
@@ -60,7 +60,7 @@ fun ForgotPasswordScreen(navController: NavController) {
                 verticalAlignment = Alignment.CenterVertically
             ) {
                 Image(
-                    painter = painterResource(id = R.drawable.jairo_transparent_logo),
+                    painter = painterResource(id = R.drawable.jairo_logo),
                     contentDescription = "Jairosoft Logo",
                     modifier = Modifier.size(36.dp)
                 )

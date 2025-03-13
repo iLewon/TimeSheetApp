@@ -1,4 +1,4 @@
-package com.mobileexam.timesheetapp.ui.screens
+package com.mobileexam.timesheetapp.ui.screens.LoginScreen
 
 import androidx.compose.foundation.Image
 import androidx.compose.foundation.background
@@ -44,7 +44,7 @@ fun LoginScreen(navController: NavController) {
         Spacer(modifier = Modifier.height(80.dp))
 
         Image(
-            painter = painterResource(id = R.drawable.jairo_transparent_logo),
+            painter = painterResource(id = R.drawable.jairo_logo),
             contentDescription = "Logo",
             modifier = Modifier.size(80.dp)
         )
@@ -121,7 +121,7 @@ fun LoginScreen(navController: NavController) {
         Spacer(modifier = Modifier.height(20.dp))
 
         Button(
-            onClick = { /* Handle Login */ },
+            onClick = { navController.navigate("home") { popUpTo("login") { inclusive = true } } },
             modifier = Modifier.fillMaxWidth().height(50.dp),
             colors = ButtonDefaults.buttonColors(containerColor = buttonColor),
             shape = RoundedCornerShape(25.dp)
@@ -133,7 +133,7 @@ fun LoginScreen(navController: NavController) {
 
         Text("Don't have an account?", color = textColor, fontSize = 14.sp, fontWeight = FontWeight.Bold)
 
-        TextButton(onClick = { navController.navigate("signup") }) {
+        TextButton(onClick = { /*ONCLICK FUNC*/ }) {
             Text("Sign up here.", color = buttonColor, fontSize = 14.sp, fontWeight = FontWeight.Bold)
         }
     }
