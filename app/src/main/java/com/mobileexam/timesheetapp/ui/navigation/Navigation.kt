@@ -1,105 +1,75 @@
 package com.mobileexam.timesheetapp.navigation
 
 import HomeScreenViewModel
-import androidx.compose.foundation.layout.Arrangement
-import androidx.compose.foundation.layout.Box
-import androidx.compose.foundation.layout.Row
-import androidx.compose.foundation.layout.Spacer
-import androidx.compose.foundation.layout.fillMaxWidth
-import androidx.compose.foundation.layout.padding
-import androidx.compose.foundation.layout.size
-import androidx.compose.foundation.layout.width
-import androidx.compose.material3.ExperimentalMaterial3Api
-import androidx.compose.material3.Icon
-import androidx.compose.material3.Scaffold
-import androidx.compose.material3.Text
-import androidx.compose.material3.TopAppBar
-import androidx.compose.runtime.Composable
-import androidx.compose.ui.Alignment
+import androidx.compose.foundation.layout.*
+import androidx.compose.material3.*
+import androidx.compose.runtime.*
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.platform.LocalContext
-import androidx.compose.ui.res.painterResource
 import androidx.compose.ui.text.font.Font
 import androidx.compose.ui.text.font.FontFamily
 import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
 import androidx.lifecycle.viewmodel.compose.viewModel
-import androidx.navigation.compose.NavHost
-import androidx.navigation.compose.composable
-import androidx.navigation.compose.rememberNavController
+import androidx.navigation.NavHostController
+import androidx.navigation.compose.*
 import com.mobileexam.timesheetapp.R
 import com.mobileexam.timesheetapp.ui.components.BottomNavigationBar
 import com.mobileexam.timesheetapp.ui.screens.HomeScreen.HomeScreen
 import com.mobileexam.timesheetapp.ui.screens.ProfileScreen.ReportsScreen
 import com.mobileexam.timesheetapp.ui.screens.TimesheetHistory.TimesheetHistoryScreen
+import com.mobileexam.timesheetapp.ui.screens.LoginScreen.LoginScreen
+
 
 @OptIn(ExperimentalMaterial3Api::class)
 @Composable
 fun TimesheetApp() {
     val navController = rememberNavController()
-    val montserratFont = FontFamily(Font(R.font.montserrat_medium))
-    val context = LocalContext.current
+
+    val currentRoute by navController.currentBackStackEntryFlow.collectAsState(initial = navController.currentBackStackEntry)
+
+    val showBottomBar = currentRoute?.destination?.route !in listOf("login", null)
+    val showTopBar = showBottomBar // Hide top bar on login too
 
     //Initialize ViewModel once and share it
     val homeScreenViewModel: HomeScreenViewModel = viewModel()
+    val context = LocalContext.current
 
     Scaffold(
         topBar = {
-            TopAppBar(
-                title = {
-                    Box(
-                        modifier = Modifier.fillMaxWidth(),
-                        contentAlignment = Alignment.Center
-                    ) {
-                        Row(
-                            verticalAlignment = Alignment.CenterVertically,
-                            horizontalArrangement = Arrangement.Center,
-                            modifier = Modifier.fillMaxWidth()
-                        ) {
-                            Icon(
-                                painter = painterResource(id = R.drawable.jairo_logo),
-                                contentDescription = "Jairosoft Logo",
-                                modifier = Modifier.size(30.dp)
-                            )
-                            Spacer(modifier = Modifier.width(8.dp))
-                            Text(
-                                "Jairosoft",
-                                fontFamily = montserratFont,
-                                fontSize = 18.sp,
-                                fontWeight = FontWeight.Medium
-                            )
-                        }
+            if (showTopBar) {
+                TopAppBar(
+                    title = {
+                        Text("Jairosoft", fontSize = 18.sp, fontWeight = FontWeight.Medium)
                     }
-                }
-            )
+                )
+            }
         },
         bottomBar = {
-            BottomNavigationBar(navController)
+            if (showBottomBar) {
+                BottomNavigationBar(navController)
+            }
         }
     ) { padding ->
         NavHost(
             navController = navController,
-            startDestination = "home",
+            startDestination = "login",
             modifier = Modifier.padding(padding)
         ) {
-            // ✅ Pass the shared ViewModel instead of creating a new one
-            composable("home") {
-                HomeScreen(
-                    modifier = Modifier,
-                    navController = navController,
-                    context = context,
-                    viewModel = homeScreenViewModel // Using shared ViewModel
-                )
-            }
-            composable("history") {
-                TimesheetHistoryScreen(
-                    modifier = Modifier,
-                    navController = navController,
-                    context = context
-                )
-            }
+            composable("login") { LoginScreen(navController) }
+            composable("home") { HomeScreen(
+                modifier = Modifier,
+                navController = navController,
+                context = context,
+                viewModel = homeScreenViewModel) }
+            composable("history") { TimesheetHistoryScreen(
+                modifier = Modifier,
+                navController = navController,
+                context = context) }
             composable("profile") { ReportsScreen(navController) }
         }
     }
 }
+
+
