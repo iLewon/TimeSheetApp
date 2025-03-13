@@ -31,7 +31,7 @@ import androidx.navigation.compose.rememberNavController
 import com.mobileexam.timesheetapp.R
 import com.mobileexam.timesheetapp.ui.components.BottomNavigationBar
 import com.mobileexam.timesheetapp.ui.screens.HomeScreen.HomeScreen
-import com.mobileexam.timesheetapp.ui.screens.ProfileScreen.ReportsScreen
+import com.mobileexam.timesheetapp.ui.screens.ProfileScreen.ProfileScreen
 import com.mobileexam.timesheetapp.ui.screens.TimesheetHistory.TimesheetHistoryScreen
 
 @OptIn(ExperimentalMaterial3Api::class)
@@ -41,7 +41,7 @@ fun TimesheetApp() {
     val montserratFont = FontFamily(Font(R.font.montserrat_medium))
     val context = LocalContext.current
 
-    //Initialize ViewModel once and share it
+    // Initialize ViewModel once and share it
     val homeScreenViewModel: HomeScreenViewModel = viewModel()
 
     Scaffold(
@@ -93,7 +93,7 @@ fun TimesheetApp() {
                 )
             }
             composable("history") { TimesheetHistoryScreen(navController) }
-            composable("profile") { ReportsScreen(navController) }
+            composable("profile") { ProfileScreen(navController) }
         }
     }
 }
