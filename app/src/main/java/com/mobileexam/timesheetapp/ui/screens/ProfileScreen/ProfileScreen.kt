@@ -1,4 +1,4 @@
-package com.mobileexam.timesheetapp.ui.screens.ProfileScreen
+ package com.mobileexam.timesheetapp.ui.screens.ProfileScreen
 
 import android.net.Uri
 import androidx.activity.compose.rememberLauncherForActivityResult
@@ -44,27 +44,47 @@ import androidx.navigation.NavController
 import coil.compose.rememberAsyncImagePainter
 import com.mobileexam.timesheetapp.R
 import com.mobileexam.timesheetapp.ui.theme.DarkBackground
+import android.content.Context
+import android.util.Log
+import androidx.compose.runtime.collectAsState
+import androidx.compose.ui.platform.LocalContext
+import androidx.lifecycle.viewModelScope
+import androidx.lifecycle.viewmodel.compose.viewModel
+import androidx.navigation.Navigation
+import com.mobileexam.timesheetapp.ui.viewmodel.ProfileViewModel
+import kotlinx.coroutines.launch
 
-@Composable
-fun ProfileScreen(navController: NavController) {
+ @Composable
+fun ProfileScreen(navController: NavController, viewModel: ProfileViewModel) {
+
+    val fullName by viewModel.fullName.collectAsState()
+    val username by viewModel.username.collectAsState()
+    val email by viewModel.email.collectAsState()
+    val phoneNumber by viewModel.phoneNumber.collectAsState()
+    val profileImageUri by viewModel.profileImageUri.collectAsState()
+
     var isEditing by remember { mutableStateOf(false) }
     var isChangingPassword by remember { mutableStateOf(false) }
-
-    var fullName by remember { mutableStateOf("John Doe") }
-    var username by remember { mutableStateOf("johndoe") }
-    var email by remember { mutableStateOf("johndoe@example.com") }
-    var phoneNumber by remember { mutableStateOf("+63 912 345 6789") }
-
-    var currentPassword by remember { mutableStateOf("") }
-    var newPassword by remember { mutableStateOf("") }
-    var confirmPassword by remember { mutableStateOf("") }
-
-    var profileImageUri by remember { mutableStateOf<Uri?>(null) }
 
     val isDarkTheme = isSystemInDarkTheme()
     val backgroundColor = if (isDarkTheme) DarkBackground else Color(0xFFE0E0E0)
     val textColor = if (isDarkTheme) Color.White else Color.Black
     val buttonColor = Color(0xFF3478F6)
+    val context = LocalContext.current
+
+    var currentPassword by remember { mutableStateOf("") }
+    var newPassword by remember { mutableStateOf("") }
+    var confirmPassword by remember { mutableStateOf("") }
+
+    // Logout function
+    fun logout() {
+        val sharedPreferences = context.getSharedPreferences("UserPrefs", Context.MODE_PRIVATE)
+        sharedPreferences.edit().remove("auth_token").apply()
+        Log.d("Logout", "User has successfully logged out. Token removed.")
+        navController.navigate("login") {
+            popUpTo("profile") { inclusive = true }
+        }
+    }
 
     Column(
         modifier = Modifier
@@ -72,26 +92,40 @@ fun ProfileScreen(navController: NavController) {
             .background(backgroundColor)
     ) {
         ProfileTopBar(navController, textColor, backgroundColor)
-        Spacer(modifier = Modifier.height(20.dp))
-        ProfilePicture(profileImageUri) { newUri -> profileImageUri = newUri }
         Spacer(modifier = Modifier.height(10.dp))
 
         if (isChangingPassword) {
             ChangePasswordSection(
-                currentPassword, newPassword, confirmPassword,
-                { currentPassword = it }, { newPassword = it }, { confirmPassword = it },
+                currentPassword = currentPassword,
+                newPassword = newPassword,
+                confirmPassword = confirmPassword,
+                onCurrentPasswordChange = { currentPassword = it },
+                onNewPasswordChange = { newPassword = it },
+                onConfirmPasswordChange = { confirmPassword = it },
                 onSavePassword = { isChangingPassword = false },
-                textColor = textColor, // ✅ Dynamic text color
-                isDarkTheme = isDarkTheme // ✅ Pass dark mode state
+                textColor = textColor,
+                isDarkTheme = isDarkTheme
             )
         }
+
         else {
             ProfileDetailsSection(
-                isEditing, fullName, username, email, phoneNumber,
-                { fullName = it }, { username = it }, { email = it }, { phoneNumber = it },
-                { isEditing = !isEditing }, { isChangingPassword = true },
+                isEditing = isEditing,
+                fullName = fullName,
+                username = username,
+                email = email,
+                phoneNumber = phoneNumber,
+                onFullNameChange = viewModel::updateFullName,
+                onUsernameChange = viewModel::updateUsername,
+                onEmailChange = viewModel::updateEmail,
+                onPhoneNumberChange = viewModel::updatePhoneNumber,
+                onEditToggle = { isEditing = !isEditing },
+                onChangePassword = { isChangingPassword = true },
                 buttonColor = buttonColor,
-                textColor = textColor // ✅ Pass textColor
+                textColor = textColor,
+                onLogout = {
+                    logout()
+                }
             )
         }
     }
@@ -105,39 +139,40 @@ fun ProfileTopBar(navController: NavController, textColor: Color, topBarColor: C
             .background(topBarColor)
             .padding(16.dp)
     ) {
-        IconButton(onClick = { navController.navigateUp() }) {
-            Icon(Icons.Default.ArrowBack, contentDescription = "Back", tint = textColor)
-        }
+//        IconButton(onClick = { navController.navigateUp() }) {
+//            Icon(Icons.Default.ArrowBack, contentDescription = "Back", tint = textColor)
+//        }
         Text("Profile", fontSize = 18.sp, color = textColor, modifier = Modifier.align(Alignment.Center))
     }
 }
 
-@Composable
-fun ProfilePicture(profileImageUri: Uri?, onImageSelected: (Uri) -> Unit) {
-    val imagePickerLauncher = rememberLauncherForActivityResult(
-        contract = ActivityResultContracts.GetContent()
-    ) { uri: Uri? ->
-        uri?.let { onImageSelected(it) }
-    }
+//@Composable
+//fun ProfilePicture(profileImageUri: Uri?, onImageSelected: (Uri) -> Unit) {
+//    val imagePickerLauncher = rememberLauncherForActivityResult(
+//        contract = ActivityResultContracts.GetContent()
+//    ) { uri: Uri? ->
+//        uri?.let { onImageSelected(it) }
+//    }
+//
+//    Box(
+//        modifier = Modifier.fillMaxWidth(),
+//        contentAlignment = Alignment.Center
+//    ) {
+//        Image(
+//            painter = rememberAsyncImagePainter(
+//                model = profileImageUri ?: R.drawable.ic_profile_placeholder
+//            ),
+//            contentDescription = "Profile Picture",
+//            contentScale = ContentScale.Crop,
+//            modifier = Modifier
+//                .size(100.dp)
+//                .clip(CircleShape)
+//                .background(Color.Gray)
+//                .clickable { imagePickerLauncher.launch("image/*") }
+//        )
+//    }
+//}
 
-    Box(
-        modifier = Modifier.fillMaxWidth(),
-        contentAlignment = Alignment.Center
-    ) {
-        Image(
-            painter = rememberAsyncImagePainter(
-                model = profileImageUri ?: R.drawable.ic_profile_placeholder
-            ),
-            contentDescription = "Profile Picture",
-            contentScale = ContentScale.Crop,
-            modifier = Modifier
-                .size(100.dp)
-                .clip(CircleShape)
-                .background(Color.Gray)
-                .clickable { imagePickerLauncher.launch("image/*") }
-        )
-    }
-}
 
 @Composable
 fun ProfileDetailsSection(
@@ -153,7 +188,8 @@ fun ProfileDetailsSection(
     onEditToggle: () -> Unit,
     onChangePassword: () -> Unit,
     buttonColor: Color,
-    textColor: Color // ✅ New parameter
+    textColor: Color,
+    onLogout: () -> Unit
 ) {
     Column(modifier = Modifier.padding(horizontal = 20.dp)) {
         if (isEditing) {
@@ -177,7 +213,7 @@ fun ProfileDetailsSection(
             Text(if (isEditing) "Save Profile" else "Edit Profile", fontSize = 16.sp, color = Color.White)
         }
         Spacer(modifier = Modifier.height(10.dp))
-        if (!isEditing) { // ✅ Only show when NOT editing the profile
+        if (!isEditing) {
             Button(
                 onClick = onChangePassword,
                 modifier = Modifier.fillMaxWidth().height(50.dp),
@@ -187,6 +223,16 @@ fun ProfileDetailsSection(
                 Text("Change Password", fontSize = 16.sp, color = Color.White)
             }
         }
+        Spacer(modifier = Modifier.height(10.dp))
+        Button(
+            onClick = { onLogout() },
+            modifier = Modifier.fillMaxWidth().height(50.dp),
+            colors = ButtonDefaults.buttonColors(containerColor = Color.Red),
+            shape = RoundedCornerShape(25.dp)
+        ) {
+            Text("Logout", fontSize = 16.sp, color = Color.White)
+        }
+
     }
 }
 
@@ -227,8 +273,8 @@ fun ChangePasswordSection(
     onNewPasswordChange: (String) -> Unit,
     onConfirmPasswordChange: (String) -> Unit,
     onSavePassword: () -> Unit,
-    textColor: Color, // ✅ Dynamic text color
-    isDarkTheme: Boolean // ✅ Detect dark mode
+    textColor: Color,
+    isDarkTheme: Boolean
 ) {
     Column(modifier = Modifier.padding(horizontal = 20.dp)) {
         Spacer(modifier = Modifier.height(20.dp))
@@ -236,7 +282,7 @@ fun ChangePasswordSection(
             text = "Change Password",
             fontSize = 18.sp,
             fontWeight = FontWeight.Bold,
-            color = textColor // ✅ Adjusted for dark mode
+            color = textColor
         )
         Spacer(modifier = Modifier.height(10.dp))
 
