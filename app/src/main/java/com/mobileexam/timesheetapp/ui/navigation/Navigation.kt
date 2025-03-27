@@ -20,7 +20,7 @@ import com.mobileexam.timesheetapp.ui.screens.HomeScreen.HomeScreen
 import com.mobileexam.timesheetapp.ui.screens.LoginScreen.LoginScreen
 import com.mobileexam.timesheetapp.ui.screens.ProfileScreen.ProfileScreen
 import com.mobileexam.timesheetapp.ui.screens.TimesheetHistory.TimesheetHistoryScreen
-
+import com.mobileexam.timesheetapp.ui.viewmodel.ProfileViewModel
 
 
 @OptIn(ExperimentalMaterial3Api::class)
@@ -68,7 +68,11 @@ fun TimesheetApp() {
                 modifier = Modifier,
                 navController = navController,
                 context = context) }
-            composable("profile") { ProfileScreen(navController) }
+            composable("profile") {
+                val profileViewModel: ProfileViewModel = viewModel()
+                ProfileScreen(navController, profileViewModel)
+            }
+
         }
     }
 }
