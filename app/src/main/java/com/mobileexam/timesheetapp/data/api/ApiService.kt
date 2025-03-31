@@ -1,21 +1,21 @@
 package com.mobileexam.timesheetapp.data.api
 
 import com.mobileexam.timesheetapp.models.LoginResponse
+import com.mobileexam.timesheetapp.models.LogsResponse
 import retrofit2.Call
-import retrofit2.http.Field
-import retrofit2.http.FormUrlEncoded
-import retrofit2.http.GET
-import retrofit2.http.Header
-import retrofit2.http.POST
+import retrofit2.http.*
 
 interface ApiService {
     @FormUrlEncoded
-    @POST("login")  // Replace with your actual login endpoint
+    @POST("login")
     fun login(
         @Field("email") email: String,
         @Field("password") password: String
     ): Call<LoginResponse>
 
-    @GET("users")  // Replace with your actual users endpoint
+    @GET("users")
     fun getUsers(@Header("Authorization") token: String): Call<LoginResponse>
+
+    @GET("logs")
+    fun getLogs(@Header("Authorization") token: String): Call<LogsResponse>
 }

@@ -1,3 +1,5 @@
+package com.mobileexam.timesheetapp.ui.screens.HomeScreen
+
 import androidx.lifecycle.ViewModel
 import androidx.lifecycle.viewModelScope
 import kotlinx.coroutines.Job
@@ -37,18 +39,18 @@ class HomeScreenViewModel : ViewModel() {
         _isOnBreak.value = !_isOnBreak.value
     }
 
-    fun startDutyTimer() {
+    fun startDutyTimer() {  // Changed from private to public
         stopDutyTimer() // Cancel any existing timer before starting a new one
 
         dutyTimerJob = viewModelScope.launch {
             while (_isClockedIn.value) {
                 delay(1000)
-                _dutySeconds.update { it + 1 } // Safely update dutySeconds
+                _dutySeconds.update { it + 1 }
             }
         }
     }
 
-    fun stopDutyTimer() {
+    fun stopDutyTimer() {  // Changed from private to public
         dutyTimerJob?.cancel()
         dutyTimerJob = null
     }

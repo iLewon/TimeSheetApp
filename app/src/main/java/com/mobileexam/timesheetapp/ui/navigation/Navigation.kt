@@ -1,26 +1,29 @@
 package com.mobileexam.timesheetapp.navigation
 
-import HomeScreenViewModel
-import androidx.compose.foundation.layout.*
-import androidx.compose.material3.*
-import androidx.compose.runtime.*
+import androidx.compose.foundation.layout.padding
+import androidx.compose.material3.ExperimentalMaterial3Api
+import androidx.compose.material3.Scaffold
+import androidx.compose.material3.Text
+import androidx.compose.material3.TopAppBar
+import androidx.compose.runtime.Composable
+import androidx.compose.runtime.collectAsState
+import androidx.compose.runtime.getValue
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.platform.LocalContext
-import androidx.compose.ui.text.font.Font
-import androidx.compose.ui.text.font.FontFamily
 import androidx.compose.ui.text.font.FontWeight
-import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
 import androidx.lifecycle.viewmodel.compose.viewModel
-import androidx.navigation.NavHostController
-import androidx.navigation.compose.*
-import com.mobileexam.timesheetapp.R
+import androidx.navigation.compose.NavHost
+import androidx.navigation.compose.composable
+import androidx.navigation.compose.rememberNavController
 import com.mobileexam.timesheetapp.ui.components.BottomNavigationBar
 import com.mobileexam.timesheetapp.ui.screens.HomeScreen.HomeScreen
+import com.mobileexam.timesheetapp.ui.screens.HomeScreen.HomeScreenViewModel
 import com.mobileexam.timesheetapp.ui.screens.LoginScreen.LoginScreen
 import com.mobileexam.timesheetapp.ui.screens.ProfileScreen.ProfileScreen
 import com.mobileexam.timesheetapp.ui.screens.TimesheetHistory.TimesheetHistoryScreen
 import com.mobileexam.timesheetapp.ui.viewmodel.ProfileViewModel
+import com.mobileexam.timesheetapp.viewmodel.TimesheetHistoryViewModel
 
 
 @OptIn(ExperimentalMaterial3Api::class)
@@ -64,10 +67,15 @@ fun TimesheetApp() {
                 navController = navController,
                 context = context,
                 viewModel = homeScreenViewModel) }
-            composable("history") { TimesheetHistoryScreen(
-                modifier = Modifier,
-                navController = navController,
-                context = context) }
+            composable("history") {
+                val timesheetHistoryViewModel: TimesheetHistoryViewModel = viewModel()
+                TimesheetHistoryScreen(
+                    modifier = Modifier,
+                    navController = navController,
+                    context = context,
+                    viewModel = timesheetHistoryViewModel
+                )
+            }
             composable("profile") {
                 val profileViewModel: ProfileViewModel = viewModel()
                 ProfileScreen(navController, profileViewModel)
