@@ -18,7 +18,6 @@ import androidx.compose.ui.unit.sp
 import androidx.lifecycle.viewmodel.compose.viewModel
 import androidx.navigation.NavController
 import com.mobileexam.timesheetapp.R
-import com.mobileexam.timesheetapp.models.TimesheetEntry
 import com.mobileexam.timesheetapp.utils.*
 import kotlinx.coroutines.delay
 
@@ -29,7 +28,6 @@ fun HomeScreen(modifier: Modifier, navController: NavController, context: Contex
     val dutySeconds by viewModel.dutySeconds.collectAsState()
 
     var currentTime by remember { mutableStateOf(getCurrentTime()) }
-    var timesheetEntries by remember { mutableStateOf<List<TimesheetEntry>>(emptyList()) }
 
     LaunchedEffect(isClockedIn) {
         if (isClockedIn) {
@@ -46,10 +44,6 @@ fun HomeScreen(modifier: Modifier, navController: NavController, context: Contex
         }
     }
 
-    LaunchedEffect(Unit) {
-        val allEntries = loadTimesheetData(context)
-        timesheetEntries = allEntries.sortedByDescending { it.date }.take(5)
-    }
 
     val currentDate = getCurrentDate()
 
@@ -138,53 +132,7 @@ fun HomeScreen(modifier: Modifier, navController: NavController, context: Contex
             }
         }
         item {
-            Card(
-                modifier = Modifier
-                    .fillMaxWidth()
-                    .border(1.dp, MaterialTheme.colorScheme.onTertiary, shape = RoundedCornerShape(12.dp)),
-                shape = RoundedCornerShape(12.dp),
-                colors = CardDefaults.cardColors(containerColor = MaterialTheme.colorScheme.surface)
-            ) {
-                Column(modifier = Modifier.padding(16.dp)) {
-                    Row(
-                        verticalAlignment = Alignment.CenterVertically,
-                        modifier = Modifier.fillMaxWidth()
-                    ) {
-                        Icon(painter = painterResource(R.drawable.time), contentDescription = "History", modifier = Modifier.size(16.dp))
-                        Spacer(modifier = Modifier.width(6.dp))
-                        Text("Timesheet History", color = MaterialTheme.colorScheme.onSurface)
-                    }
-                    Spacer(modifier = Modifier.height(16.dp))
-                    Row(
-                        modifier = Modifier.fillMaxWidth().background(Color.DarkGray).padding(8.dp),
-                        horizontalArrangement = Arrangement.SpaceBetween
-                    ) {
-                        Text("Date", color = Color.White, fontWeight = FontWeight.Bold, modifier = Modifier.weight(1f))
-                        Text("Time Start", color = Color.White, fontWeight = FontWeight.Bold, modifier = Modifier.weight(1f))
-                        Text("Time End", color = Color.White, fontWeight = FontWeight.Bold, modifier = Modifier.weight(1f))
-                    }
-                    timesheetEntries.forEach { entry ->
-                        Row(
-                            modifier = Modifier.fillMaxWidth().padding(vertical = 4.dp),
-                            horizontalArrangement = Arrangement.SpaceBetween
-                        ) {
-                            Text(entry.date, color = MaterialTheme.colorScheme.onSurface, modifier = Modifier.weight(1f))
-                            Text(entry.timeStart, color = MaterialTheme.colorScheme.onSurface, modifier = Modifier.weight(1f))
-                            Text(entry.timeEnd, color = MaterialTheme.colorScheme.onSurface, modifier = Modifier.weight(1f))
-                        }
-                    }
-                    Spacer(modifier = Modifier.height(24.dp))
-                    Button(
-                        onClick = { navController.navigate("history") },
-                        colors = ButtonDefaults.buttonColors(containerColor = MaterialTheme.colorScheme.primary),
-                        shape = RoundedCornerShape(8.dp),
-                        modifier = Modifier.fillMaxWidth()
-                    ) {
-                        Text("Show Timesheet", color = Color.White)
-                    }
-                    Spacer(modifier = Modifier.height(8.dp))
-                }
-            }
+
         }
     }
 }
