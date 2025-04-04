@@ -14,7 +14,7 @@ data class LogsData(
 
 data class LogItem(
     @SerializedName("_id") val id: String,
-    @SerializedName("Total Hours 100%") val totalHours: Int,
+    @SerializedName("Total Hours 100%") val totalHours: Long,
     @SerializedName("toggle") val toggle: String,
     @SerializedName("time-in") val timeIn: Long,
     @SerializedName("time-out") val timeOut: Long,

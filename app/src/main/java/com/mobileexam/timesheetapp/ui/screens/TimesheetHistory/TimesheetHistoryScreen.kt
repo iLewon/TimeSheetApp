@@ -143,6 +143,15 @@ fun formatTime(timestamp: Long): String {
     return SimpleDateFormat("hh:mm a", Locale.getDefault()).format(Date(timestamp))
 }
 
+fun calculateHoursAndMinutesWorked(timeIn: Long, timeOut: Long): String {
+    val durationMillis = timeOut - timeIn
+    val totalMinutes = durationMillis / (1000 * 60)
+    val hours = totalMinutes / 60
+    val minutes = totalMinutes % 60
+    return "$hours hr ${minutes} min"
+}
+
+
 @Composable
 fun TimesheetDetailDialog(entry: LogItem, onClose: () -> Unit) {
     val totalHoursWorked = calculateHoursWorked(formatTime(entry.timeIn), formatTime(entry.timeOut))
@@ -158,9 +167,11 @@ fun TimesheetDetailDialog(entry: LogItem, onClose: () -> Unit) {
         text = {
             Column {
                 Text("Date: ${formatDate(entry.date)}")
+                Text("Attendance Status: ${entry.attendanceStatus}")
                 Text("Time Started: ${formatTime(entry.timeIn)}")
                 Text("Time Ended: ${formatTime(entry.timeOut)}")
-                Text("Total Hours Worked: $totalHoursWorked")
+                Text("Total Hours Worked: ${calculateHoursAndMinutesWorked(entry.timeIn, entry.timeOut)}")
+
             }
         }
     )
