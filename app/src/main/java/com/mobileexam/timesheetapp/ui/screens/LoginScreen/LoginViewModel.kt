@@ -12,7 +12,13 @@ import retrofit2.Response
 
 class LoginViewModel : ViewModel() {
 
-    fun login(email: String, password: String, context: Context, onResult: (Boolean) -> Unit) {
+    fun login(
+        email: String,
+        password: String,
+        context: Context,
+        rememberMe: Boolean,
+        onResult: (Boolean) -> Unit
+    ) {
         viewModelScope.launch {
             val call = RetrofitClient.instance.login(email, password)
 
@@ -24,9 +30,20 @@ class LoginViewModel : ViewModel() {
                             val token = loginResponse.response.token
                             val userId = loginResponse.response.user_id
 
-                            // Save token in SharedPreferences
-                            val sharedPreferences = context.getSharedPreferences("UserPrefs", Context.MODE_PRIVATE)
-                            sharedPreferences.edit().putString("auth_token", token).apply()
+                            val prefs = context.getSharedPreferences("UserPrefs", Context.MODE_PRIVATE)
+                            with(prefs.edit()) {
+                                putString("auth_token", token)
+                                if (rememberMe) {
+                                    putString("saved_email", email)
+                                    putString("saved_password", password)
+                                    putBoolean("remember_me", true)
+                                } else {
+                                    remove("saved_email")
+                                    remove("saved_password")
+                                    putBoolean("remember_me", false)
+                                }
+                                apply()
+                            }
 
                             println("Login Successful! Token: $token, User ID: $userId")
                             onResult(true)

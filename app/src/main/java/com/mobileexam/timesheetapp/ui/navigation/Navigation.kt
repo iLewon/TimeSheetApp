@@ -17,6 +17,7 @@ import androidx.navigation.compose.NavHost
 import androidx.navigation.compose.composable
 import androidx.navigation.compose.rememberNavController
 import com.mobileexam.timesheetapp.ui.components.BottomNavigationBar
+import com.mobileexam.timesheetapp.ui.screens.ForgotPassword.ForgotPasswordScreen
 import com.mobileexam.timesheetapp.ui.screens.HomeScreen.HomeScreen
 import com.mobileexam.timesheetapp.ui.screens.HomeScreen.HomeScreenViewModel
 import com.mobileexam.timesheetapp.ui.screens.LoginScreen.LoginScreen
@@ -61,12 +62,17 @@ fun TimesheetApp() {
             startDestination = "login",
             modifier = Modifier.padding(padding)
         ) {
-            composable("login") { LoginScreen(navController) }
-            composable("home") { HomeScreen(
-                modifier = Modifier,
-                navController = navController,
-                context = context,
-                viewModel = homeScreenViewModel) }
+            composable("login") {
+                LoginScreen(navController)
+            }
+            composable("home") {
+                HomeScreen(
+                    modifier = Modifier,
+                    navController = navController,
+                    context = context,
+                    viewModel = homeScreenViewModel
+                )
+            }
             composable("history") {
                 val timesheetHistoryViewModel: TimesheetHistoryViewModel = viewModel()
                 TimesheetHistoryScreen(
@@ -80,7 +86,9 @@ fun TimesheetApp() {
                 val profileViewModel: ProfileViewModel = viewModel()
                 ProfileScreen(navController, profileViewModel)
             }
-
+            composable("forgot_password") {
+                ForgotPasswordScreen(navController) // <-- Added this route for the ForgotPasswordScreen
+            }
         }
     }
 }
