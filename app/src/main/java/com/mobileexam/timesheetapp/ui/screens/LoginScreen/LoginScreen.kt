@@ -29,6 +29,11 @@ import retrofit2.Response
 import retrofit2.Retrofit
 import retrofit2.converter.gson.GsonConverterFactory
 import android.content.Context
+import androidx.compose.material.icons.Icons
+import androidx.compose.material.icons.filled.Visibility
+import androidx.compose.material.icons.filled.VisibilityOff
+import androidx.compose.ui.text.font.FontFamily
+import androidx.compose.ui.text.input.VisualTransformation
 
 
 fun loginUser(email: String, password: String, context: Context, navController: NavController) {
@@ -69,8 +74,6 @@ fun loginUser(email: String, password: String, context: Context, navController: 
         }
     })
 }
-
-
 
 @OptIn(ExperimentalMaterial3Api::class)
 @Composable
@@ -115,15 +118,29 @@ fun LoginScreen(navController: NavController, loginViewModel: LoginViewModel = v
         Text(
             text = "Let’s bring your digital dreams to life",
             color = Color.Gray,
-            fontSize = 14.sp
+            fontSize = 16.sp,
+            fontWeight = FontWeight.Medium,
+            letterSpacing = 0.5.sp,
+            fontFamily = FontFamily.SansSerif
         )
 
-        Spacer(modifier = Modifier.height(30.dp))
+        Spacer(modifier = Modifier.height(38.dp))
+
+        val isDarkTheme = isSystemInDarkTheme()
+
+        Text(
+            text = "Email",
+            fontSize = 14.sp,
+            color = if (isDarkTheme) Color.LightGray else Color.DarkGray,  // Change color based on theme
+            modifier = Modifier
+                .padding(bottom = 4.dp)
+                .align(Alignment.Start)
+        )
 
         OutlinedTextField(
             value = email,
             onValueChange = { email = it },
-            placeholder = { Text("Username", color = Color.Gray) },
+            placeholder = { Text("Enter email", color = Color.Gray) },
             modifier = Modifier
                 .fillMaxWidth()
                 .background(inputFieldColor, shape = RoundedCornerShape(10.dp)),
@@ -138,13 +155,32 @@ fun LoginScreen(navController: NavController, loginViewModel: LoginViewModel = v
             )
         )
 
-        Spacer(modifier = Modifier.height(10.dp))
+        Spacer(modifier = Modifier.height(20.dp))
+
+        var passwordVisible by remember { mutableStateOf(false) }
+
+        Text(
+            text = "Password",
+            fontSize = 14.sp,
+            color = if (isDarkTheme) Color.LightGray else Color.DarkGray,  // Change color based on theme
+            modifier = Modifier
+                .padding(bottom = 4.dp)
+                .align(Alignment.Start)
+        )
 
         OutlinedTextField(
             value = password,
             onValueChange = { password = it },
-            placeholder = { Text("Password", color = Color.Gray) },
-            visualTransformation = PasswordVisualTransformation(),
+            placeholder = { Text("Enter password", color = Color.Gray) },
+            visualTransformation = if (passwordVisible) VisualTransformation.None else PasswordVisualTransformation(),
+            trailingIcon = {
+                val icon = if (passwordVisible) Icons.Default.Visibility else Icons.Default.VisibilityOff
+                val description = if (passwordVisible) "Hide password" else "Show password"
+
+                IconButton(onClick = { passwordVisible = !passwordVisible }) {
+                    Icon(imageVector = icon, contentDescription = description)
+                }
+            },
             modifier = Modifier
                 .fillMaxWidth()
                 .background(inputFieldColor, shape = RoundedCornerShape(10.dp)),
@@ -158,7 +194,6 @@ fun LoginScreen(navController: NavController, loginViewModel: LoginViewModel = v
                 unfocusedIndicatorColor = Color.Transparent
             )
         )
-
         Spacer(modifier = Modifier.height(5.dp))
 
         Row(
