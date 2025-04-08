@@ -28,7 +28,7 @@ import com.mobileexam.timesheetapp.viewmodel.TimesheetHistoryViewModel
 
 @OptIn(ExperimentalMaterial3Api::class)
 @Composable
-fun TimesheetApp() {
+fun TimesheetApp(isLoggedIn: Boolean) {
     val navController = rememberNavController()
 
     val currentRoute by navController.currentBackStackEntryFlow.collectAsState(initial = navController.currentBackStackEntry)
@@ -58,7 +58,7 @@ fun TimesheetApp() {
     ) { padding ->
         NavHost(
             navController = navController,
-            startDestination = "login",
+            startDestination = if (isLoggedIn) "home" else "login",
             modifier = Modifier.padding(padding)
         ) {
             composable("login") { LoginScreen(navController) }

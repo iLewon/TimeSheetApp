@@ -82,7 +82,9 @@ fun ProfileScreen(navController: NavController, viewModel: ProfileViewModel) {
         sharedPreferences.edit().remove("auth_token").apply()
         Log.d("Logout", "User has successfully logged out. Token removed.")
         navController.navigate("login") {
-            popUpTo("profile") { inclusive = true }
+            popUpTo(navController.graph.startDestinationId) {
+                inclusive = true
+            }
         }
     }
 
