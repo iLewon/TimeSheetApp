@@ -1,6 +1,14 @@
 package com.mobileexam.timesheetapp.ui.screens.TimesheetHistory
 
+import android.content.ContentValues
 import android.content.Context
+import android.graphics.Canvas
+import android.graphics.Paint
+import android.graphics.pdf.PdfDocument
+import android.os.Build
+import android.os.Environment
+import android.provider.MediaStore
+import android.widget.Toast
 import androidx.compose.foundation.background
 import androidx.compose.foundation.border
 import androidx.compose.foundation.clickable
@@ -27,7 +35,10 @@ import com.google.gson.reflect.TypeToken
 import com.mobileexam.timesheetapp.R
 import com.mobileexam.timesheetapp.models.LogItem
 import com.mobileexam.timesheetapp.viewmodel.TimesheetHistoryViewModel
+import java.io.File
+import java.io.FileOutputStream
 import java.io.InputStreamReader
+import java.io.OutputStream
 import java.text.SimpleDateFormat
 import java.util.*
 import java.util.concurrent.TimeUnit
@@ -58,7 +69,14 @@ fun TimesheetHistoryScreen(
             )
 
             Spacer(modifier = Modifier.height(16.dp))
-
+            Button(
+                onClick = { generatePdfReport(context, logs) },
+                modifier = Modifier
+                    .align(Alignment.End)
+                    .padding(bottom = 16.dp)
+            ) {
+                Text("Download PDF Report")
+            }
             Card(
                 modifier = Modifier
                     .fillMaxWidth()
@@ -131,6 +149,9 @@ fun TimesheetHistoryScreen(
                     }
                 }
             }
+
+
+
         }
     }
 
@@ -156,6 +177,68 @@ fun loadLocalTimesheetLogs(context: Context): List<LogItem> {
         Gson().fromJson(reader, logItemType)
     } catch (e: Exception) {
         emptyList()
+    }
+}
+
+fun generatePdfReport(context: Context, logs: List<LogItem>) {
+    val pdfDocument = PdfDocument()
+    val paint = Paint()
+    val pageInfo = PdfDocument.PageInfo.Builder(595, 842, 1).create() // A4
+    val page = pdfDocument.startPage(pageInfo)
+    val canvas: Canvas = page.canvas
+
+    paint.textSize = 14f
+    var yPosition = 40
+    canvas.drawText("Timesheet Report", 200f, yPosition.toFloat(), paint)
+    yPosition += 30
+
+    logs.forEachIndexed { index, entry ->
+        val date = entry.date ?: "--"
+        val timeIn = entry.timeIn ?: "--"
+        val timeOut = entry.timeOut ?: "--"
+        val status = entry.status ?: "--"
+        val undertime = entry.totalUndertime ?: "--"
+
+        val logLine = "${index + 1}. Date: $date | In: $timeIn | Out: $timeOut | Status: $status | Undertime: $undertime"
+        canvas.drawText(logLine, 20f, yPosition.toFloat(), paint)
+        yPosition += 25
+    }
+
+    pdfDocument.finishPage(page)
+
+    val fileName = "Timesheet_Report_${SimpleDateFormat("yyyyMMdd_HHmmss", Locale.getDefault()).format(Date())}.pdf"
+
+    try {
+        val outputStream: OutputStream? = if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.Q) {
+            // API 29 and above - MediaStore
+            val resolver = context.contentResolver
+            val contentValues = ContentValues().apply {
+                put(MediaStore.MediaColumns.DISPLAY_NAME, fileName)
+                put(MediaStore.MediaColumns.MIME_TYPE, "application/pdf")
+                put(MediaStore.MediaColumns.RELATIVE_PATH, Environment.DIRECTORY_DOWNLOADS)
+            }
+            val uri = resolver.insert(MediaStore.Files.getContentUri("external"), contentValues)
+            uri?.let { resolver.openOutputStream(it) }
+        } else {
+            // Below API 29 - direct path (needs storage permission if targetSdk < 30)
+            val downloadsDir = Environment.getExternalStoragePublicDirectory(Environment.DIRECTORY_DOWNLOADS)
+            if (!downloadsDir.exists()) downloadsDir.mkdirs()
+            val file = File(downloadsDir, fileName)
+            FileOutputStream(file)
+        }
+
+        if (outputStream != null) {
+            pdfDocument.writeTo(outputStream)
+            outputStream.close()
+            Toast.makeText(context, "PDF saved to Downloads", Toast.LENGTH_LONG).show()
+        } else {
+            Toast.makeText(context, "Failed to create PDF file", Toast.LENGTH_SHORT).show()
+        }
+    } catch (e: Exception) {
+        e.printStackTrace()
+        Toast.makeText(context, "Error saving PDF: ${e.message}", Toast.LENGTH_LONG).show()
+    } finally {
+        pdfDocument.close()
     }
 }
 
