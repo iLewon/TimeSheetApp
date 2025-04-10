@@ -208,7 +208,10 @@ fun LoginScreen(navController: NavController, loginViewModel: LoginViewModel = v
 
         Button(
             onClick = {
-                loginUser(email, password, context, navController)
+//                loginUser(email, password, context, navController)
+                navController.navigate("home") {
+                    popUpTo("login") { inclusive = true }
+                }
             },
             modifier = Modifier.fillMaxWidth().height(50.dp),
             colors = ButtonDefaults.buttonColors(containerColor = buttonColor),

@@ -31,12 +31,11 @@ data class LogsResponse(
 )
 
 data class LogItem(
-    @SerializedName("user_id") val userId: String,
-    val date: String,
-    @SerializedName("time-in") val timeIn: String,
-    @SerializedName("time-out") val timeOut: String,
-    @SerializedName("total-late") val totalLate: String,
-    @SerializedName("total-undertime") val totalUndertime: String,
-    val status: String
+    val date: String?,
+    val timeIn: String?,
+    val timeOut: String?,
+    val status: String?,
+    val totalUndertime: String?
 )
+
 

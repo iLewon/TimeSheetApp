@@ -11,7 +11,10 @@ import androidx.compose.foundation.border
 import androidx.compose.foundation.clickable
 import androidx.compose.foundation.layout.*
 import androidx.compose.foundation.lazy.LazyColumn
+import androidx.compose.foundation.lazy.items
+import androidx.compose.foundation.rememberScrollState
 import androidx.compose.foundation.shape.RoundedCornerShape
+import androidx.compose.foundation.verticalScroll
 import androidx.compose.material3.*
 import androidx.compose.runtime.*
 import androidx.compose.runtime.livedata.observeAsState
@@ -26,15 +29,20 @@ import androidx.compose.ui.unit.sp
 import androidx.core.content.ContextCompat
 import androidx.lifecycle.viewmodel.compose.viewModel
 import androidx.navigation.NavController
+import com.google.gson.Gson
+import com.google.gson.reflect.TypeToken
 import com.mobileexam.timesheetapp.R
 import com.mobileexam.timesheetapp.models.LogItem
-import com.mobileexam.timesheetapp.ui.screens.TimesheetHistory.formatDate
+import com.mobileexam.timesheetapp.ui.screens.TimesheetHistory.loadLocalTimesheetLogs
 import com.mobileexam.timesheetapp.utils.*
 import kotlinx.coroutines.delay
+import java.io.InputStreamReader
 import java.text.SimpleDateFormat
 import java.util.Date
 import java.util.Locale
 import java.util.concurrent.TimeUnit
+
+
 
 @Composable
 fun HomeScreen(modifier: Modifier, navController: NavController, context: Context, viewModel: HomeScreenViewModel = viewModel()) {
@@ -46,6 +54,8 @@ fun HomeScreen(modifier: Modifier, navController: NavController, context: Contex
     var selectedEntry by remember { mutableStateOf<LogItem?>(null) }
 
     var currentTime by remember { mutableStateOf(getCurrentTime()) }
+
+    val logs = remember { com.mobileexam.timesheetapp.ui.screens.HomeScreen.loadLocalTimesheetLogs(context) }
 
     val location by viewModel.location
 
@@ -59,13 +69,11 @@ fun HomeScreen(modifier: Modifier, navController: NavController, context: Contex
         }
     }
 
-
     LaunchedEffect(isClockedIn) {
         if (isClockedIn) {
             viewModel.fetchLocation()
         }
     }
-
 
     LaunchedEffect(isClockedIn) {
         if (isClockedIn) {
@@ -82,11 +90,6 @@ fun HomeScreen(modifier: Modifier, navController: NavController, context: Contex
         }
     }
 
-    LaunchedEffect(Unit) {
-        viewModel.fetchLogs()
-    }
-
-
     val currentDate = getCurrentDate()
 
     LazyColumn(
@@ -97,6 +100,7 @@ fun HomeScreen(modifier: Modifier, navController: NavController, context: Contex
         horizontalAlignment = Alignment.CenterHorizontally,
         verticalArrangement = Arrangement.spacedBy(16.dp)
     ) {
+        // Greeting Header
         item {
             Text(
                 "Hello, User!",
@@ -106,6 +110,8 @@ fun HomeScreen(modifier: Modifier, navController: NavController, context: Contex
                 modifier = Modifier.fillMaxWidth()
             )
         }
+
+        // Clock-in/Clock-out Section
         item {
             Card(
                 modifier = Modifier
@@ -141,31 +147,29 @@ fun HomeScreen(modifier: Modifier, navController: NavController, context: Contex
                             Box(
                                 modifier = Modifier
                                     .fillMaxWidth()
-                                    .padding(top = 8.dp), // Optional: Add padding to adjust positioning
+                                    .padding(top = 8.dp),
                                 contentAlignment = Alignment.Center
                             ) {
                                 Row(
                                     verticalAlignment = Alignment.CenterVertically,
-                                    horizontalArrangement = Arrangement.Center // Center the Row horizontally
+                                    horizontalArrangement = Arrangement.Center
                                 ) {
                                     Icon(
-                                        painter = painterResource(id = R.drawable.location), // Replace with your actual location icon
+                                        painter = painterResource(id = R.drawable.location),
                                         contentDescription = "Location",
-                                        modifier = Modifier.size(20.dp), // Adjust the size as needed
-                                        tint = MaterialTheme.colorScheme.onSurface // Optional: adjust the icon's color
+                                        modifier = Modifier.size(20.dp),
+                                        tint = MaterialTheme.colorScheme.onSurface
                                     )
-                                    Spacer(modifier = Modifier.width(8.dp)) // Optional: space between the icon and location text
+                                    Spacer(modifier = Modifier.width(8.dp))
                                     Text(
                                         " $location",
                                         color = MaterialTheme.colorScheme.onSurface,
                                         fontSize = 16.sp,
-                                        textAlign = TextAlign.Center // Ensure the text is center-aligned
+                                        textAlign = TextAlign.Center
                                     )
                                 }
                             }
                         }
-
-
                     } else {
                         Text("You are currently clocked out.", color = MaterialTheme.colorScheme.onSurface)
                     }
@@ -215,8 +219,10 @@ fun HomeScreen(modifier: Modifier, navController: NavController, context: Contex
                 }
             }
         }
+
+        // Timesheet History Section
+        // Timesheet History Section
         item {
-            //ADD THE TIMESHEET HISTORY DATA ENTRIES HERE
             Card(
                 modifier = Modifier
                     .fillMaxWidth()
@@ -251,12 +257,13 @@ fun HomeScreen(modifier: Modifier, navController: NavController, context: Contex
                         Text("Time End", color = Color.White, fontWeight = FontWeight.Bold, modifier = Modifier.weight(1f))
                     }
 
-                    logsResponse?.map { it.data }?.let { logs ->
-                        val recentLogs = logs.take(5)
-
+                    // Use the logs variable directly
+                    if (logs.isEmpty()) {
+                        Text("No timesheet logs available.", color = MaterialTheme.colorScheme.onSurface)
+                    } else {
+                        val recentLogs = logs.takeLast(5)
                         LazyColumn(modifier = Modifier.fillMaxWidth().heightIn(max = 300.dp)) {
-                            items(recentLogs.size) { index ->
-                                val entry = logs[index]
+                            items(recentLogs) { entry ->
                                 val formattedDate = if (entry.date.isNullOrEmpty()) "--" else entry.date
                                 val formattedTimeStart = if (entry.timeIn.isNullOrEmpty()) "--" else entry.timeIn
                                 val formattedTimeEnd = if (entry.timeOut.isNullOrEmpty()) "--" else entry.timeOut
@@ -291,14 +298,23 @@ fun HomeScreen(modifier: Modifier, navController: NavController, context: Contex
                                 }
                             }
                         }
-                    } ?: Text("No logs available", modifier = Modifier.padding(16.dp))
-
-                    if (errorMessage != null) {
-                        Text("Error: $errorMessage", color = Color.Red)
                     }
                 }
             }
         }
+    }
+}
+
+fun loadLocalTimesheetLogs(context: Context): List<LogItem> {
+    return try {
+        val assetManager = context.assets
+        val inputStream = assetManager.open("timesheet.json")
+        val reader = InputStreamReader(inputStream)
+        val logItemType = object : TypeToken<List<LogItem>>() {}.type
+        Gson().fromJson(reader, logItemType)
+    } catch (e: Exception) {
+        e.printStackTrace() // Log the exception
+        emptyList()
     }
 }
 
@@ -312,8 +328,6 @@ fun formatTime(timestamp: Long): String {
 
 @Composable
 fun TimesheetDetailDialog(entry: LogItem, onClose: () -> Unit) {
-//    val totalHoursWorked = calculateHoursWorked(formatTime(entry.timeIn), formatTime(entry.timeOut))
-
     AlertDialog(
         onDismissRequest = onClose,
         confirmButton = {
@@ -334,16 +348,14 @@ fun TimesheetDetailDialog(entry: LogItem, onClose: () -> Unit) {
     )
 }
 
-fun calculateHoursWorked(startTime: String, endTime: String): String {
-    return try {
-        val format = SimpleDateFormat("hh:mm a", Locale.US)
-        val start = format.parse(startTime)
-        val end = format.parse(endTime)
-        val diff = end.time - start.time
-        val hours = TimeUnit.MILLISECONDS.toHours(diff)
-        val minutes = TimeUnit.MILLISECONDS.toMinutes(diff) % 60
-        "${hours}h ${minutes}m"
-    } catch (e: Exception) {
-        "N/A"
-    }
-}
+
+//fun calculateHoursWorked(startTime: String, endTime: String): String {
+//    return try {
+//        val format = SimpleDateFormat("hh:mm a", Locale.US)
+//        val start = format.parse(startTime)
+//        val end = format.parse(endTime)
+//        val diff = end.time - start.time
+//        val hours = TimeUnit.MILLISECONDS.toHours(diff)
+//        val minutes = TimeUnit.MILLISECONDS.toMinutes(diff) % 60
+//        "${hours}h ${minutes}m"
+

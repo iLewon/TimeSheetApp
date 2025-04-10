@@ -6,6 +6,7 @@ import androidx.compose.foundation.border
 import androidx.compose.foundation.clickable
 import androidx.compose.foundation.layout.*
 import androidx.compose.foundation.lazy.LazyColumn
+import androidx.compose.foundation.lazy.items
 import androidx.compose.foundation.rememberScrollState
 import androidx.compose.foundation.shape.RoundedCornerShape
 import androidx.compose.foundation.verticalScroll
@@ -21,9 +22,12 @@ import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
 import androidx.lifecycle.viewmodel.compose.viewModel
 import androidx.navigation.NavController
+import com.google.gson.Gson
+import com.google.gson.reflect.TypeToken
 import com.mobileexam.timesheetapp.R
 import com.mobileexam.timesheetapp.models.LogItem
 import com.mobileexam.timesheetapp.viewmodel.TimesheetHistoryViewModel
+import java.io.InputStreamReader
 import java.text.SimpleDateFormat
 import java.util.*
 import java.util.concurrent.TimeUnit
@@ -35,13 +39,8 @@ fun TimesheetHistoryScreen(
     context: Context,
     viewModel: TimesheetHistoryViewModel = viewModel()
 ) {
-    val logsResponse by viewModel.logs.observeAsState()
-    val errorMessage by viewModel.errorMessage.observeAsState()
     var selectedEntry by remember { mutableStateOf<LogItem?>(null) }
-
-    LaunchedEffect(Unit) {
-        viewModel.fetchLogs()
-    }
+    val logs = remember { loadLocalTimesheetLogs(context) }
 
     Box(
         modifier = Modifier
@@ -94,49 +93,41 @@ fun TimesheetHistoryScreen(
                         Text("Time End", color = Color.White, fontWeight = FontWeight.Bold, modifier = Modifier.weight(1f))
                     }
 
-                    logsResponse?.map { it.data }?.let { logs ->
-                        LazyColumn(modifier = Modifier.fillMaxWidth()) {
-                            items(logs.size) { index ->
-                                val entry = logs[index]
-                                val formattedDate = if (entry.date.isNullOrEmpty()) "--" else entry.date
-                                val formattedTimeStart = if (entry.timeIn.isNullOrEmpty()) "--" else entry.timeIn
-                                val formattedTimeEnd = if (entry.timeOut.isNullOrEmpty()) "--" else entry.timeOut
+                    LazyColumn(modifier = Modifier.fillMaxWidth()) {
+                        items(logs) { entry ->
+                            val formattedDate = if (entry.date.isNullOrEmpty()) "--" else entry.date
+                            val formattedTimeStart = if (entry.timeIn.isNullOrEmpty()) "--" else entry.timeIn
+                            val formattedTimeEnd = if (entry.timeOut.isNullOrEmpty()) "--" else entry.timeOut
 
-                                Column {
-                                    Row(
-                                        modifier = Modifier
-                                            .fillMaxWidth()
-                                            .clickable { selectedEntry = entry }
-                                            .padding(vertical = 4.dp),
-                                        horizontalArrangement = Arrangement.SpaceBetween
-                                    ) {
-                                        listOf(formattedDate, formattedTimeStart, formattedTimeEnd).forEach { text ->
-                                            Box(
-                                                modifier = Modifier
-                                                    .weight(1f)
-                                                    .fillMaxWidth(),
-                                                contentAlignment = if (text == "--") Alignment.Center else Alignment.CenterStart
-                                            ) {
-                                                Text(
-                                                    text,
-                                                    color = MaterialTheme.colorScheme.onSurface,
-                                                    fontSize = 13.sp
-                                                )
-                                            }
+                            Column {
+                                Row(
+                                    modifier = Modifier
+                                        .fillMaxWidth()
+                                        .clickable { selectedEntry = entry }
+                                        .padding(vertical = 4.dp),
+                                    horizontalArrangement = Arrangement.SpaceBetween
+                                ) {
+                                    listOf(formattedDate, formattedTimeStart, formattedTimeEnd).forEach { text ->
+                                        Box(
+                                            modifier = Modifier
+                                                .weight(1f)
+                                                .fillMaxWidth(),
+                                            contentAlignment = if (text == "--") Alignment.Center else Alignment.CenterStart
+                                        ) {
+                                            Text(
+                                                text,
+                                                color = MaterialTheme.colorScheme.onSurface,
+                                                fontSize = 13.sp
+                                            )
                                         }
                                     }
-
-                                    Spacer(modifier = Modifier.height(4.dp))
-                                    Divider(color = MaterialTheme.colorScheme.onSurface.copy(alpha = 0.2f))
-                                    Spacer(modifier = Modifier.height(4.dp))
                                 }
+
+                                Spacer(modifier = Modifier.height(4.dp))
+                                Divider(color = MaterialTheme.colorScheme.onSurface.copy(alpha = 0.2f))
+                                Spacer(modifier = Modifier.height(4.dp))
                             }
                         }
-
-                    } ?: Text("No logs available", modifier = Modifier.padding(16.dp))
-
-                    if (errorMessage != null) {
-                        Text("Error: $errorMessage", color = Color.Red)
                     }
                 }
             }
@@ -155,27 +146,21 @@ fun TimesheetHistoryScreen(
     }
 }
 
-fun formatDate(timestamp: Long): String {
-    return SimpleDateFormat("MMM dd, yyyy", Locale.getDefault()).format(Date(timestamp))
+// Loads data from assets/timesheet.json
+fun loadLocalTimesheetLogs(context: Context): List<LogItem> {
+    return try {
+        val assetManager = context.assets
+        val inputStream = assetManager.open("timesheet.json")
+        val reader = InputStreamReader(inputStream)
+        val logItemType = object : TypeToken<List<LogItem>>() {}.type
+        Gson().fromJson(reader, logItemType)
+    } catch (e: Exception) {
+        emptyList()
+    }
 }
-
-fun formatTime(timestamp: Long): String {
-    return SimpleDateFormat("hh:mm a", Locale.getDefault()).format(Date(timestamp))
-}
-
-fun calculateHoursAndMinutesWorked(timeIn: Long, timeOut: Long): String {
-    val durationMillis = timeOut - timeIn
-    val totalMinutes = durationMillis / (1000 * 60)
-    val hours = totalMinutes / 60
-    val minutes = totalMinutes % 60
-    return "$hours hr ${minutes} min"
-}
-
 
 @Composable
 fun TimesheetDetailDialog(entry: LogItem, onClose: () -> Unit) {
-//    val totalHoursWorked = calculateHoursWorked(formatTime(entry.timeIn), formatTime(entry.timeOut))
-
     AlertDialog(
         onDismissRequest = onClose,
         confirmButton = {
@@ -186,27 +171,12 @@ fun TimesheetDetailDialog(entry: LogItem, onClose: () -> Unit) {
         title = { Text("Timesheet Details", fontWeight = FontWeight.Bold) },
         text = {
             Column {
-                Text("Date: ${(entry.date)}")
+                Text("Date: ${entry.date}")
                 Text("Attendance Status: ${entry.status}")
-                Text("Time Started: ${(entry.timeIn)}")
-                Text("Time Ended: ${(entry.timeOut)}")
+                Text("Time Started: ${entry.timeIn}")
+                Text("Time Ended: ${entry.timeOut}")
                 Text("Total Under-time: ${entry.totalUndertime}")
-
             }
         }
     )
-}
-
-fun calculateHoursWorked(startTime: String, endTime: String): String {
-    return try {
-        val format = SimpleDateFormat("hh:mm a", Locale.US)
-        val start = format.parse(startTime)
-        val end = format.parse(endTime)
-        val diff = end.time - start.time
-        val hours = TimeUnit.MILLISECONDS.toHours(diff)
-        val minutes = TimeUnit.MILLISECONDS.toMinutes(diff) % 60
-        "${hours}h ${minutes}m"
-    } catch (e: Exception) {
-        "N/A"
-    }
 }
