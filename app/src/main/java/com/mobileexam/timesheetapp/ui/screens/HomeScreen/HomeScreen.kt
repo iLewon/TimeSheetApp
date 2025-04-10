@@ -1,6 +1,11 @@
 package com.mobileexam.timesheetapp.ui.screens.HomeScreen
 
+import android.Manifest
 import android.content.Context
+import android.content.pm.PackageManager
+import android.widget.Toast
+import androidx.activity.compose.rememberLauncherForActivityResult
+import androidx.activity.result.contract.ActivityResultContracts
 import androidx.compose.foundation.background
 import androidx.compose.foundation.border
 import androidx.compose.foundation.clickable
@@ -15,8 +20,10 @@ import androidx.compose.ui.Modifier
 import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.res.painterResource
 import androidx.compose.ui.text.font.FontWeight
+import androidx.compose.ui.text.style.TextAlign
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
+import androidx.core.content.ContextCompat
 import androidx.lifecycle.viewmodel.compose.viewModel
 import androidx.navigation.NavController
 import com.mobileexam.timesheetapp.R
@@ -39,6 +46,26 @@ fun HomeScreen(modifier: Modifier, navController: NavController, context: Contex
     var selectedEntry by remember { mutableStateOf<LogItem?>(null) }
 
     var currentTime by remember { mutableStateOf(getCurrentTime()) }
+
+    val location by viewModel.location
+
+    val locationPermissionLauncher = rememberLauncherForActivityResult(
+        contract = ActivityResultContracts.RequestPermission()
+    ) { isGranted ->
+        if (isGranted) {
+            viewModel.fetchLocation()
+        } else {
+            Toast.makeText(context, "Location permission is needed to clock in with location.", Toast.LENGTH_SHORT).show()
+        }
+    }
+
+
+    LaunchedEffect(isClockedIn) {
+        if (isClockedIn) {
+            viewModel.fetchLocation()
+        }
+    }
+
 
     LaunchedEffect(isClockedIn) {
         if (isClockedIn) {
@@ -110,13 +137,55 @@ fun HomeScreen(modifier: Modifier, navController: NavController, context: Contex
                             fontSize = 40.sp,
                             fontWeight = FontWeight.Bold
                         )
+                        if (location != null) {
+                            Box(
+                                modifier = Modifier
+                                    .fillMaxWidth()
+                                    .padding(top = 8.dp), // Optional: Add padding to adjust positioning
+                                contentAlignment = Alignment.Center
+                            ) {
+                                Row(
+                                    verticalAlignment = Alignment.CenterVertically,
+                                    horizontalArrangement = Arrangement.Center // Center the Row horizontally
+                                ) {
+                                    Icon(
+                                        painter = painterResource(id = R.drawable.location), // Replace with your actual location icon
+                                        contentDescription = "Location",
+                                        modifier = Modifier.size(20.dp), // Adjust the size as needed
+                                        tint = MaterialTheme.colorScheme.onSurface // Optional: adjust the icon's color
+                                    )
+                                    Spacer(modifier = Modifier.width(8.dp)) // Optional: space between the icon and location text
+                                    Text(
+                                        " $location",
+                                        color = MaterialTheme.colorScheme.onSurface,
+                                        fontSize = 16.sp,
+                                        textAlign = TextAlign.Center // Ensure the text is center-aligned
+                                    )
+                                }
+                            }
+                        }
+
+
                     } else {
                         Text("You are currently clocked out.", color = MaterialTheme.colorScheme.onSurface)
                     }
                     Spacer(modifier = Modifier.height(50.dp))
                     if (!isClockedIn) {
                         Button(
-                            onClick = { viewModel.clockIn() },
+                            onClick = {
+                                val fineLocationGranted = ContextCompat.checkSelfPermission(
+                                    context,
+                                    Manifest.permission.ACCESS_FINE_LOCATION
+                                ) == PackageManager.PERMISSION_GRANTED
+
+                                if (!fineLocationGranted) {
+                                    locationPermissionLauncher.launch(Manifest.permission.ACCESS_FINE_LOCATION)
+                                } else {
+                                    viewModel.fetchLocation()
+                                }
+
+                                viewModel.clockIn()
+                            },
                             colors = ButtonDefaults.buttonColors(containerColor = Color(0xFF4CAF50)),
                             shape = RoundedCornerShape(8.dp)
                         ) {
@@ -182,26 +251,43 @@ fun HomeScreen(modifier: Modifier, navController: NavController, context: Contex
                         Text("Time End", color = Color.White, fontWeight = FontWeight.Bold, modifier = Modifier.weight(1f))
                     }
 
-                    logsResponse?.response?.Logs?.let { logs ->
-                        val recentLogs = logs.takeLast(5)
+                    logsResponse?.map { it.data }?.let { logs ->
+                        val recentLogs = logs.take(5)
 
                         LazyColumn(modifier = Modifier.fillMaxWidth().heightIn(max = 300.dp)) {
                             items(recentLogs.size) { index ->
-                                val entry = recentLogs[index]
-                                val formattedDate = formatDate(entry.date)
-                                val formattedTimeStart = formatTime(entry.timeIn)
-                                val formattedTimeEnd = formatTime(entry.timeOut)
+                                val entry = logs[index]
+                                val formattedDate = if (entry.date.isNullOrEmpty()) "--" else entry.date
+                                val formattedTimeStart = if (entry.timeIn.isNullOrEmpty()) "--" else entry.timeIn
+                                val formattedTimeEnd = if (entry.timeOut.isNullOrEmpty()) "--" else entry.timeOut
 
-                                Row(
-                                    modifier = Modifier
-                                        .fillMaxWidth()
-                                        .clickable { selectedEntry = entry }
-                                        .padding(vertical = 4.dp),
-                                    horizontalArrangement = Arrangement.SpaceBetween
-                                ) {
-                                    Text(formattedDate, color = MaterialTheme.colorScheme.onSurface, modifier = Modifier.weight(1f))
-                                    Text(formattedTimeStart, color = MaterialTheme.colorScheme.onSurface, modifier = Modifier.weight(1f))
-                                    Text(formattedTimeEnd, color = MaterialTheme.colorScheme.onSurface, modifier = Modifier.weight(1f))
+                                Column {
+                                    Row(
+                                        modifier = Modifier
+                                            .fillMaxWidth()
+                                            .clickable { selectedEntry = entry }
+                                            .padding(vertical = 4.dp),
+                                        horizontalArrangement = Arrangement.SpaceBetween
+                                    ) {
+                                        listOf(formattedDate, formattedTimeStart, formattedTimeEnd).forEach { text ->
+                                            Box(
+                                                modifier = Modifier
+                                                    .weight(1f)
+                                                    .fillMaxWidth(),
+                                                contentAlignment = if (text == "--") Alignment.Center else Alignment.CenterStart
+                                            ) {
+                                                Text(
+                                                    text,
+                                                    color = MaterialTheme.colorScheme.onSurface,
+                                                    fontSize = 13.sp
+                                                )
+                                            }
+                                        }
+                                    }
+
+                                    Spacer(modifier = Modifier.height(4.dp))
+                                    Divider(color = MaterialTheme.colorScheme.onSurface.copy(alpha = 0.2f))
+                                    Spacer(modifier = Modifier.height(4.dp))
                                 }
                             }
                         }
@@ -226,7 +312,7 @@ fun formatTime(timestamp: Long): String {
 
 @Composable
 fun TimesheetDetailDialog(entry: LogItem, onClose: () -> Unit) {
-    val totalHoursWorked = calculateHoursWorked(formatTime(entry.timeIn), formatTime(entry.timeOut))
+//    val totalHoursWorked = calculateHoursWorked(formatTime(entry.timeIn), formatTime(entry.timeOut))
 
     AlertDialog(
         onDismissRequest = onClose,
@@ -238,10 +324,11 @@ fun TimesheetDetailDialog(entry: LogItem, onClose: () -> Unit) {
         title = { Text("Timesheet Details", fontWeight = FontWeight.Bold) },
         text = {
             Column {
-                Text("Date: ${formatDate(entry.date)}")
-                Text("Time Started: ${formatTime(entry.timeIn)}")
-                Text("Time Ended: ${formatTime(entry.timeOut)}")
-                Text("Total Hours Worked: $totalHoursWorked")
+                Text("Date: ${(entry.date)}")
+                Text("Attendance Status: ${entry.status}")
+                Text("Time Started: ${(entry.timeIn)}")
+                Text("Time Ended: ${(entry.timeOut)}")
+                Text("Total Under-time: ${entry.totalUndertime}")
             }
         }
     )

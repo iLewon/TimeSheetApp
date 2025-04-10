@@ -16,6 +16,10 @@ interface ApiService {
     @GET("users")
     fun getUsers(@Header("Authorization") token: String): Call<LoginResponse>
 
+//    @GET("logs")
+//    fun getLogs(@Header("Authorization") token: String): Call<LogsResponse>
+
     @GET("logs")
-    fun getLogs(@Header("Authorization") token: String): Call<LogsResponse>
+    fun getLogs(@Header("Authorization") token: String): Call<List<LogsResponse>>
+
 }

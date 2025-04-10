@@ -53,7 +53,6 @@ fun loginUser(email: String, password: String, context: Context, navController: 
                     val token = loginResponse.response.token
                     println("Login Successful! Token: $token")
 
-                    // ✅ Save token in SharedPreferences
                     val sharedPreferences = context.getSharedPreferences("UserPrefs", Context.MODE_PRIVATE)
                     sharedPreferences.edit().putString("auth_token", token).apply()
 

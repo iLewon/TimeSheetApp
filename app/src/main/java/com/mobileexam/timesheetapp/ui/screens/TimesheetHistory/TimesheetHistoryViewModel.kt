@@ -14,8 +14,11 @@ import retrofit2.Response
 
 class TimesheetHistoryViewModel(application: Application) : AndroidViewModel(application) {
 
-    private val _logs = MutableLiveData<LogsResponse?>()
-    val logs: LiveData<LogsResponse?> get() = _logs
+//    private val _logs = MutableLiveData<LogsResponse?>()
+//    val logs: LiveData<LogsResponse?> get() = _logs
+
+    private val _logs = MutableLiveData<List<LogsResponse>?>()
+    val logs: LiveData<List<LogsResponse>?> get() = _logs
 
     private val _errorMessage = MutableLiveData<String?>()
     val errorMessage: LiveData<String?> get() = _errorMessage
@@ -26,26 +29,46 @@ class TimesheetHistoryViewModel(application: Application) : AndroidViewModel(app
     }
 
     fun fetchLogs() {
+//        val token = getAuthToken()
+//        if (token.isEmpty()) {
+//            _errorMessage.postValue("No authentication token found! Please log in.")
+//            return
+//        }
+//
+//        RetrofitClient.instance.getLogs("Bearer $token").enqueue(object : Callback<LogsResponse> {
+//            override fun onResponse(call: Call<LogsResponse>, response: Response<LogsResponse>) {
+//                if (response.isSuccessful) {
+//                    _logs.postValue(response.body())
+//                    Log.d("TimeSheetHistoryVM", "Logs fetched successfully")
+//                } else {
+//                    _errorMessage.postValue("Error: ${response.errorBody()?.string()}")
+//                    Log.e("TimeSheetHistoryVM", "Error fetching logs: ${response.errorBody()?.string()}")
+//                }
+//            }
+//
+//            override fun onFailure(call: Call<LogsResponse>, t: Throwable) {
+//                _errorMessage.postValue("Failed to fetch logs: ${t.message}")
+//                Log.e("TimeSheetHistoryVM", "API Call Failed: ${t.message}")
+//            }
+//        })
+
         val token = getAuthToken()
         if (token.isEmpty()) {
             _errorMessage.postValue("No authentication token found! Please log in.")
             return
         }
 
-        RetrofitClient.instance.getLogs("Bearer $token").enqueue(object : Callback<LogsResponse> {
-            override fun onResponse(call: Call<LogsResponse>, response: Response<LogsResponse>) {
+        RetrofitClient.instance.getLogs("Bearer $token").enqueue(object : Callback<List<LogsResponse>> {
+            override fun onResponse(call: Call<List<LogsResponse>>, response: Response<List<LogsResponse>>) {
                 if (response.isSuccessful) {
                     _logs.postValue(response.body())
-                    Log.d("TimeSheetHistoryVM", "Logs fetched successfully")
                 } else {
                     _errorMessage.postValue("Error: ${response.errorBody()?.string()}")
-                    Log.e("TimeSheetHistoryVM", "Error fetching logs: ${response.errorBody()?.string()}")
                 }
             }
 
-            override fun onFailure(call: Call<LogsResponse>, t: Throwable) {
+            override fun onFailure(call: Call<List<LogsResponse>>, t: Throwable) {
                 _errorMessage.postValue("Failed to fetch logs: ${t.message}")
-                Log.e("TimeSheetHistoryVM", "API Call Failed: ${t.message}")
             }
         })
     }
